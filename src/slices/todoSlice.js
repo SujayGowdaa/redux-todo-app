@@ -1,10 +1,12 @@
-import { createSlice, nanoid } from '@reduxjs/toolkit';
+import { createAsyncThunk, createSlice, nanoid } from '@reduxjs/toolkit';
 
 function getLocalData() {
   if (localStorage.getItem('todos')) {
     return JSON.parse(localStorage.getItem('todos'));
   } else {
     return {
+      isLoading: false,
+      isError: false,
       pendingTodos: {
         data: [],
       },
@@ -31,6 +33,26 @@ export const STATUS = Object.freeze({
 function storeInLocal(state) {
   localStorage.setItem('todos', JSON.stringify(state));
 }
+
+export const fetchTodo = createAsyncThunk('fetch/todo', async () => {
+  try {
+    const response = await fetch(
+      `https://jsonplaceholder.typicode.com/users/${
+        Math.round(Math.random() * 10) + 1
+      }/todos?_limit=1`
+    );
+
+    if (!response.ok) {
+      throw new Error('Something went wrong!');
+    }
+
+    const data = await response.json();
+
+    return data;
+  } catch (err) {
+    throw Error(err);
+  }
+});
 
 export const todoSlice = createSlice({
   name: 'todo',
@@ -158,6 +180,27 @@ export const todoSlice = createSlice({
       state.deletedTodos.data = [];
       storeInLocal(state);
     },
+  },
+
+  extraReducers: (builder) => {
+    builder.addCase(fetchTodo.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(fetchTodo.fulfilled, (state, action) => {
+      state.isLoading = false;
+      const modifiedArray = action.payload.map((todo) => ({
+        id: nanoid(),
+        text: todo.title ? todo.title : 'No title',
+        status: STATUS.PENDING,
+      }));
+
+      state.pendingTodos.data.push({ ...modifiedArray[0] });
+      storeInLocal(state);
+    });
+    builder.addCase(fetchTodo.rejected, (state) => {
+      state.isLoading = false;
+      state.isError = true;
+    });
   },
 });
 

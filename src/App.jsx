@@ -4,7 +4,13 @@ import { Input } from './components/ui/input';
 import { Card, CardTitle } from './components/ui/card';
 import { TypographyH1 } from './components/ui/typographyH1';
 import { TypographyH3 } from './components/ui/typographyH3';
-import { CheckCircle, Trash, Undo2 } from 'lucide-react';
+import {
+  CheckCircle,
+  CloudDownload,
+  PlusCircle,
+  Trash,
+  Undo2,
+} from 'lucide-react';
 import { useRef } from 'react';
 import {
   addBackToCompleted,
@@ -13,6 +19,7 @@ import {
   clearAll,
   completeTodo,
   deleteTodo,
+  fetchTodo,
 } from './slices/todoSlice';
 import PendingTodo from './components/PendingTodo';
 
@@ -52,18 +59,34 @@ function App() {
               ref={inputRef}
             />
             <div className=' flex grow gap-4 w-full'>
-              <Button className={' cursor-pointer grow'}>Add TODO</Button>
+              <Button
+                className={` ${
+                  todos.isLoading ? 'cursor-not-allowed' : 'cursor-pointer'
+                }  grow bg-purple-600 hover:bg-purple-500`}
+                variant={'destructive'}
+                onClick={() => dispatch(fetchTodo())}
+                type={'button'}
+              >
+                {`${todos.isLoading ? 'Fetching...' : 'Fetch Todo'}`}{' '}
+                <CloudDownload />
+              </Button>
+              <Button className={' cursor-pointer grow'}>
+                Add Todo <PlusCircle />
+              </Button>
               <Button
                 className={
-                  ' cursor-pointer grow text-red-800 hover:bg-red-50 hover:text-red-800'
+                  ' cursor-pointer grow text-red-800 hover:bg-red-600 hover:text-white'
                 }
                 variant={'outline'}
                 type='button'
                 onClick={() => dispatch(clearAll())}
               >
-                Clear All
+                Clear All <Trash />
               </Button>
             </div>
+            {todos.isError && (
+              <p className=' text-red-800 text-sm'>Something went wrong!</p>
+            )}
           </div>
         </form>
         <div className=' space-y-6'>
